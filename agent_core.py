@@ -1,3 +1,5 @@
+######
+######
 """Core agent logic and orchestration."""
 import asyncio
 import json
@@ -40,11 +42,14 @@ class AgentState:
 class WebAgent:
     """Intelligent web automation agent."""
     
-    def __init__(self, llm, tool_manager: ToolManager):
+    def __init__(self, llm, tool_manager: ToolManager, user_data: Optional[Dict[str, Any]] = None):
         self.llm = llm
         self.tool_manager = tool_manager
         self.state = AgentState()
-
+        self.user_data = user_data or {} # Store user_data
+        # print user_data
+        print("USER DATA IN AGENT:", json.dumps(self.user_data, indent=2))
+        
     def build_workflow(self):
         """Construct the agent workflow graph."""
         
@@ -643,17 +648,26 @@ class WebAgent:
             f"\n=== FILL_FIELDS ===\n{clean_formatted_fields}"
         ]
         
-        # Add non-fillable buttons separately
+        # Add submission buttons if any
         if submission_buttons:
             context_parts.append("\n=== SUBMISSION BUTTONS ===\n" + "\n".join(submission_buttons))
         
-        # Add file upload areas if found - CLEARLY MARKED AS FILE TYPE
+        # Add file upload areas if found
         if file_uploads:
             context_parts.append("\n=== FILE UPLOADS (USE browser_file_upload TOOL) ===")
-            context_parts.append("File path: /Users/dineshk/Downloads/clean-connection-2/sample.pdf")
+            # Provide the default path, but the LLM should be instructed to use user_data if available
+            context_parts.append("Default File path: /Users/dineshk/Downloads/clean-connection-2/sample.pdf")
             context_parts.append("\n".join(file_uploads))
         
         page_context = "\n".join(context_parts)
+
+         # Get user_data as a string for the prompt
+        user_data_context = json.dumps(self.user_data, indent=2) if self.user_data else "No user data provided."
+        
+        # to print user_data context
+        print("USER DATA CONTEXT BEING SENT TO LLM:")
+        print(user_data_context)
+
         
         raw_fields = self.state.page_state.get("raw_fields", {})
         #print("raw_fields:", json.dumps(raw_fields, indent=2))
@@ -666,26 +680,28 @@ class WebAgent:
         print("="*80 + "\n")
         
         # Use the updated prompt template with explicit file upload instructions
-        filler_prompt = FILLER_PROMPT_TEMPLATE.format(page_context=raw_fields)
+        # Use the updated prompt template with explicit user data instructions
+        filler_prompt = FILLER_PROMPT_TEMPLATE.format(
+            page_context=page_context,
+            user_data_context=user_data_context # Pass user_data to the prompt
+        )
         
         # Create a proper message sequence for the LLM
         filler_messages = [
             SystemMessage(content=filler_prompt),
-            HumanMessage(content="Please fill out this form with appropriate dummy data. Remember to use browser_file_upload for any file upload fields!"),
+            # The human message should prompt the LLM to use the provided data
+            HumanMessage(content="Please fill out this form using the provided user data. If a field is missing in the user data, use appropriate dummy data. For file uploads, use the specified path."),
         ]
 
         try:
             response = self.llm.invoke(filler_messages)
             if not response.content:
-                response.content = "Planning to fill out the form fields including file uploads."
+                response.content = "Planning to fill out the form fields using provided data."
 
-            # 🔹 If the LLM returned a plain dict of label->value, wrap it
-            #     into the shape the tool expects later (best-effort).
-
+            # If the LLM returns a dictionary directly, ensure it's in the expected format
             if isinstance(response.content, dict) and "fields" not in response.content:
                 structured_fields = [{"name": k, "value": v} for k, v in response.content.items()]
                 response.content = {"fields": structured_fields}
-
 
             return {"messages": messages + [response]}
 
@@ -700,7 +716,7 @@ class WebAgent:
         return "planner"
 
 
-    async def run(self, goal: str):
+    async def run(self, goal: str, user_data: Optional[Dict[str, Any]] = None):
         """Run the agent with the given goal."""
         print("[DEBUG] Building workflow...")
         workflow = self.build_workflow()
@@ -709,7 +725,9 @@ class WebAgent:
         initial_state = MessagesState(messages=[HumanMessage(content=goal)])
         
         print("[DEBUG] Invoking workflow...")
-        final_state = await workflow.ainvoke(initial_state)
+        # Pass user_data to the workflow invocation if needed by nodes
+        final_state = await workflow.ainvoke(initial_state, {"user_data": user_data}) 
+
         
         print("[DEBUG] Workflow finished.")
         return final_state["messages"]
