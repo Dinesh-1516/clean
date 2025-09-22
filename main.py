@@ -80,9 +80,48 @@ async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None):
             
             # Return final messages for analysis
             return messages
+        
 
+#Data to be filled
+user_data = [
+    {
+      "name": "John Doe",
+      "email": "john.doe6@example.com",
+      "Date of Birth,":"01/08/1995, (DD/MM/YYYY format)",
+      "Date of Joining,":"01/10/2025, (DD/MM/YYYY format)",
+      "phone": "+91-9876543210",
+      "Address fields":"123 Main St, City, State 12345",
+      "City, Country":"Hyderabad, India",
+      "website": "www.johndoe.dev",
+      "linkedin": "https://linkedin.com/in/example",
+      "github": "https://github.com/example",
+      "Work link/Portfolio" : "https://example.com",
+      "languages":["English","Hindi"],
+      "education":
+            {
+                "university_name": "University of Borosil",
+                "degree": "Master of Science",
+                "major": "Computer Science",
+                "start_date": "2018",
+                "end_date": "2023",
+            },
+      "experiences":
+            {
+                "company_name": "ABC Corp",
+                "title": "Software Engineer",
+                "city": "Banglore",
+                "state": "Karnataka",
+                "start_date": "Jan 2018",
+                "end_date": "Dec 2022",
+            },
+      "skills":["Python", "Java", "C++", "C#", "SQL", "NoSQL", "Data Structures & Algorithms", "RESTful API Development", "Git/GitHub", "Statistics & Probability", "Machine Learning", "Deep Learning"],
+      "summary": "A highly skilled Java Developer with expertise in designing, developing, and maintaining Java-based applications."
+    }
+  ]
 
 async def main():
+
+
     """CLI entry point."""
     import argparse
     
@@ -96,7 +135,7 @@ async def main():
    
     # Default goal if none provided
     goal = "".join(args.goal) if args.goal else (
-        "Navigate to https://careers.bimbobakeriesusa.com/careers/apply?domain=grupobimbo.com&pid=790304277209 , get all the job query form fields and fill them with appropriate data and submit the form. "
+        "Navigate to https://boards.greenhouse.io/embed/job_app?token=6114125&gh_src=be8ebc4b1&source=Linkedln , get all the job query form fields and fill them with appropriate data and submit the form. "
     )
 
     config = { 
@@ -160,3 +199,6 @@ if __name__ == "__main__":
 # https://form.jotform.com/252442272934457
 
 #       https://ibqbjb.fa.ocs.oraclecloud.com/hcmUI/CandidateExperience/en/sites/Honeywell/job/115902?utm_medium=jobboard&utm_source=linkedin
+
+
+
