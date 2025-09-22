@@ -12,12 +12,11 @@ from tool_manager import ToolManager
 from utils import analyze_goal
 
 import os
-os.environ["GOOGLE_API_KEY"] = ""  # Replace with your actual API key
-#
+os.environ["GOOGLE_API_KEY"] = ""
 google_key = os.getenv("GOOGLE_API_KEY")
 
 
-async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None):
+async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None, user_data: Optional[Dict[str, Any]] = None):
     """Run web automation with the given goal."""
     config = config or {}
     
@@ -44,7 +43,7 @@ async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None):
                 raise ValueError("Missing Google API key. Set GOOGLE_API_KEY environment variable.")
                 
             # Initialize LLM
-            model_name = config.get("model_name") or os.getenv("MODEL_NAME", "gemini-2.5-flash")
+            model_name = config.get("model_name") or os.getenv("MODEL_NAME", "gemini-2.5-flash-lite")
             llm = ChatGoogleGenerativeAI(
                 model=model_name,
                 google_api_key=api_key,
@@ -60,11 +59,11 @@ async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None):
             
             # Run the agent
             print(f"🤖 Starting automation for goal: {goal}")
-    #        messages = await agent.run(goal)
-           
             try:
-                # Run the agent with just the goal parameter
-                messages = await agent.run(goal)
+                # Pass user_data to agent.run()
+                messages = await agent.run(goal, user_data=user_data) 
+            # ... (rest of the function)
+
             except asyncio.TimeoutError:
                 print("❌ Agent run timed out!")
                 return []
@@ -82,53 +81,34 @@ async def run_automation(goal: str, config: Optional[Dict[str, Any]] = None):
             return messages
         
 
-#Data to be filled
-user_data = [
-    {
-      "name": "John Doe",
-      "email": "john.doe6@example.com",
-      "Date of Birth,":"01/08/1995, (DD/MM/YYYY format)",
-      "Date of Joining,":"01/10/2025, (DD/MM/YYYY format)",
-      "phone": "+91-9876543210",
-      "Address fields":"123 Main St, City, State 12345",
-      "City, Country":"Hyderabad, India",
-      "website": "www.johndoe.dev",
-      "linkedin": "https://linkedin.com/in/example",
-      "github": "https://github.com/example",
-      "Work link/Portfolio" : "https://example.com",
-      "languages":["English","Hindi"],
-      "education":
-            {
-                "university_name": "University of Borosil",
-                "degree": "Master of Science",
-                "major": "Computer Science",
-                "start_date": "2018",
-                "end_date": "2023",
-            },
-      "experiences":
-            {
-                "company_name": "ABC Corp",
-                "title": "Software Engineer",
-                "city": "Banglore",
-                "state": "Karnataka",
-                "start_date": "Jan 2018",
-                "end_date": "Dec 2022",
-            },
-      "skills":["Python", "Java", "C++", "C#", "SQL", "NoSQL", "Data Structures & Algorithms", "RESTful API Development", "Git/GitHub", "Statistics & Probability", "Machine Learning", "Deep Learning"],
-      "summary": "A highly skilled Java Developer with expertise in designing, developing, and maintaining Java-based applications."
-    }
-  ]
+
 
 async def main():
 
 
     """CLI entry point."""
     import argparse
+
+    #Data to be filled
+    user_data = {
+        "first_name": "John",
+        "last_name": "Doe",
+        "email": "john.doe@example.com",
+        "phone": "+11234567890",
+        "address": "123 Main St",
+        "city": "Anytown",
+        "state": "CA",
+        "zip": "12345",
+        "country": "USA",
+        "linkedin": "https://linkedin.com/in/johndoe",
+        "github": "https://github.com/johndoe",
+        "resume_path": "/path/to/your/resume.pdf" 
+    }
     
     parser = argparse.ArgumentParser(description="Web Automation Agent")
     parser.add_argument("goal", nargs="*", help="User goal for web automation")
     parser.add_argument("--api-key", help="Google API key (overrides environment variable)")
-    parser.add_argument("--model", help="Model name (default: gemini-2.5-flash)")
+    parser.add_argument("--model", help="Model name (default: gemini-2.5-flash-lite)")
     parser.add_argument("--max-steps", type=int, default=50, help="Maximum execution steps")
     
     args = parser.parse_args()
@@ -145,7 +125,7 @@ async def main():
         
     }
     
-    await run_automation(goal, config)
+    await run_automation(goal, config,user_data=user_data)
 
 
 if __name__ == "__main__":
