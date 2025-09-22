@@ -12,8 +12,8 @@ from tool_manager import ToolManager
 from utils import analyze_goal
 
 import os
-os.environ["GOOGLE_API_KEY"] = "AIzaSyDJMNXFV6k6DbZlb-Z-mfEynssltlGnfFA"  # Replace with your actual API key
-#AIzaSyA1S0_PviUC6e9gSzfXNNIu16LsODM_O0E
+os.environ["GOOGLE_API_KEY"] = ""  # Replace with your actual API key
+#
 google_key = os.getenv("GOOGLE_API_KEY")
 
 
